@@ -75,6 +75,7 @@ static const char *termcmd[] = {"terminator", NULL};
 static const char *upvol[] = {"amixer", "set", "Master", "5%+", NULL};
 static const char *downvol[] = {"amixer", "set", "Master", "5%-", NULL};
 static const char *mutevol[] = {"amixer", "set", "Master", "toggle", NULL};
+static const char *screenshot[] = {"flameshot", "gui", NULL};
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -121,6 +122,7 @@ static Key keys[] = {
 	{MODKEY, XK_F9, spawn, {.v = mutevol}},
 	{MODKEY, XK_F11, spawn, {.v = downvol}},
 	{MODKEY, XK_F12, spawn, {.v = upvol}},
+	{0, XK_Print, spawn, {.v = screenshot}},
 	TAGKEYS(XK_1, 0)
 		TAGKEYS(XK_2, 1)
 			TAGKEYS(XK_3, 2)
