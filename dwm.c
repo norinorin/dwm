@@ -228,6 +228,10 @@ struct Systray
 static int getdwmblockspid();
 static void sigdwmblocks(const Arg *arg);
 #endif
+static char *getstatepath(void);
+static FILE *getstatefile(char *mode);
+static void savesession(void);
+static void restoresession(void);
 static void copyvalidchars(char *text, char *rawtext);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
@@ -350,6 +354,7 @@ static const char autostartsh[] = "autostart.sh";
 static const char broken[] = "broken";
 static const char dwmdir[] = "dwm";
 static const char localshare[] = ".local/share";
+static const char fpstate[] = "state";
 static char stext[256];
 static char rawstext[256];
 static int screen;
@@ -1609,6 +1614,7 @@ void propertynotify(XEvent *e)
 
 void quit(const Arg *arg)
 {
+	savesession();
 	running = 0;
 }
 
@@ -1863,6 +1869,107 @@ void runautostart(void)
 
 	free(pathpfx);
 	free(path);
+}
+
+char *getstatepath(void)
+{
+	char *home;
+	char *path;
+	if ((home = getenv("HOME")) == NULL)
+		return NULL;
+	path = ecalloc(1, strlen(home) + strlen(dwmdir) + strlen(fpstate) + 4);
+	if (sprintf(path, "%s/.%s/%s", home, dwmdir, fpstate) <= 0)
+		return NULL;
+	return path;
+}
+
+FILE *getstatefile(char *mode)
+{
+	char *path;
+	if (!(path = getstatepath()))
+		return NULL;
+	FILE *fp = fopen(path, mode);
+	free(path);
+	return fp;
+}
+
+void savesession(void)
+{
+	FILE *fp;
+	if (!(fp = getstatefile("w")))
+		return;
+
+	Client *c;
+	Monitor *m;
+
+	for (m = mons; m; m = m->next)
+		for (c = m->clients; c; c = c->next)
+			fprintf(fp, "%d %ld %d\n", m->num, c->win, c->tags);
+
+	fclose(fp);
+}
+
+void restoresession(void)
+{
+	// this isn't the best implementation, but as long as it works for me
+	FILE *fp;
+	if (!(fp = getstatefile("r")))
+		return;
+
+	int status;
+	unsigned long int winid;
+	int monnum;
+	unsigned int tags;
+	Client *c;
+	Client *curc = NULL;
+	Monitor *m;
+	Monitor *destm = NULL;
+
+	for (;;)
+	{
+		for (int i = 0; i < 3; i++)
+		{
+			switch (i)
+			{
+			case 0:
+				status = fscanf(fp, "%d", &monnum);
+				break;
+			case 1:
+				status = fscanf(fp, "%lu", &winid);
+				break;
+			case 2:
+				status = fscanf(fp, "%u", &tags);
+				break;
+			}
+		}
+
+		if (status == EOF)
+			break;
+
+		for (m = mons; m; m = m->next)
+			for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
+			{
+				if (c->win != winid)
+					continue;
+				curc = c;
+				c->tags = tags;
+			}
+
+		if (curc != NULL && (destm = dirtomon(monnum)))
+		{
+			if (curc->mon->num != monnum)
+				sendmon(curc, destm);
+			else
+				arrange(destm);
+		}
+
+		if (curc->next)
+			pop(curc);
+
+		curc = NULL;
+		destm = NULL;
+	}
+	fclose(fp);
 }
 
 void scan(void)
@@ -3000,6 +3107,10 @@ int main(int argc, char *argv[])
 		die("pledge");
 #endif /* __OpenBSD__ */
 	scan();
+	restoresession();
+	char *statepath = getstatepath();
+	remove(statepath);
+	free(statepath);
 	runautostart();
 	run();
 	cleanup();
