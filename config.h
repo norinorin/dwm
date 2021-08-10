@@ -5,8 +5,8 @@ static const unsigned int borderpx = 3;		  /* border pixel of windows */
 static const unsigned int snap = 32;		  /* snap pixel */
 static const unsigned int gappih = 2;		  /* horiz inner gap between windows */
 static const unsigned int gappiv = 2;		  /* vert inner gap between windows */
-static const unsigned int gappoh = 14;		  /* horiz outer gap between windows and screen edge */
-static const unsigned int gappov = 14;		  /* vert outer gap between windows and screen edge */
+static const unsigned int gappoh = 5;		  /* horiz outer gap between windows and screen edge */
+static const unsigned int gappov = 5;		  /* vert outer gap between windows and screen edge */
 static const int smartgaps = 0;				  /* 1 means no outer gap when there is only one window */
 static const unsigned int systraypinning = 0; /* 0: sloppy systray follows selected monitor, >0: pin systray to monitor X */
 static const unsigned int systrayonleft = 0;  /* 0: systray in the right corner, >0: systray on left of status text */
@@ -144,7 +144,9 @@ static Button buttons[] = {
 	{ClkLtSymbol, 0, Button1, setlayout, {0}},
 	{ClkLtSymbol, 0, Button3, setlayout, {.v = &layouts[2]}},
 	{ClkWinTitle, 0, Button2, zoom, {0}},
-	{ClkStatusText, 0, Button2, spawn, {.v = termcmd}},
+#ifndef __OpenBSD__
+	{ClkStatusText, 0, Button1, sigdwmblocks, {.i = 1}},
+#endif
 	{ClkClientWin, MODKEY, Button1, movemouse, {0}},
 	{ClkClientWin, MODKEY, Button2, togglefloating, {0}},
 	{ClkClientWin, MODKEY, Button3, resizemouse, {0}},

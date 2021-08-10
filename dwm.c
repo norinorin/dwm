@@ -224,6 +224,11 @@ struct Systray
 };
 
 /* function declarations */
+#ifndef __OpenBSD__
+static int getdwmblockspid();
+static void sigdwmblocks(const Arg *arg);
+#endif
+static void copyvalidchars(char *text, char *rawtext);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -346,6 +351,7 @@ static const char broken[] = "broken";
 static const char dwmdir[] = "dwm";
 static const char localshare[] = ".local/share";
 static char stext[256];
+static char rawstext[256];
 static int screen;
 static int sw, sh;		   /* X display screen geometry width, height */
 static int bh, blw = 0;	   /* bar geometry */
@@ -377,6 +383,8 @@ static Display *dpy;
 static Drw *drw;
 static Monitor *mons, *selmon;
 static Window root, wmcheckwin;
+static int dwmblockssig;
+pid_t dwmblockspid = 0;
 
 /* configuration, allows nested code to access above variables */
 #include "config.h"
@@ -541,6 +549,20 @@ void attachstack(Client *c)
 	c->mon->stack = c;
 }
 
+void copyvalidchars(char *text, char *rawtext)
+{
+	int i = -1, j = 0;
+
+	while (rawtext[++i])
+	{
+		if ((unsigned char)rawtext[i] >= ' ')
+		{
+			text[j++] = rawtext[i];
+		}
+	}
+	text[j] = '\0';
+}
+
 void buttonpress(XEvent *e)
 {
 	unsigned int i, x, click, occ = 0;
@@ -576,8 +598,30 @@ void buttonpress(XEvent *e)
 		}
 		else if (ev->x < x + blw)
 			click = ClkLtSymbol;
-		else if (ev->x > selmon->ww - (int)TEXTW(stext) - getsystraywidth())
+		else if (ev->x > (x = selmon->ww - TEXTW(stext) + lrpad))
+		{
 			click = ClkStatusText;
+
+			char *text = rawstext;
+			int i = -1;
+			char ch;
+			dwmblockssig = 0;
+			while (text[++i])
+			{
+				if ((unsigned char)text[i] < ' ')
+				{
+					ch = text[i];
+					text[i] = '\0';
+					x += TEXTW(text) - lrpad;
+					text[i] = ch;
+					text += i + 1;
+					i = -1;
+					if (x >= ev->x)
+						break;
+					dwmblockssig = ch;
+				}
+			}
+		}
 		else
 			click = ClkWinTitle;
 	}
@@ -1015,6 +1059,37 @@ void enternotify(XEvent *e)
 		return;
 	focus(c);
 }
+
+#ifndef __OpenBSD__
+int getdwmblockspid()
+{
+	char buf[16];
+	FILE *fp = popen("pidof -s dwmblocks", "r");
+	fgets(buf, sizeof(buf), fp);
+	pid_t pid = strtoul(buf, NULL, 10);
+	pclose(fp);
+	dwmblockspid = pid;
+	return pid != 0 ? 0 : -1;
+}
+
+void sigdwmblocks(const Arg *arg)
+{
+	union sigval sv;
+	sv.sival_int = 0 | (dwmblockssig << 8) | arg->i;
+	if (!dwmblockspid)
+		if (getdwmblockspid() == -1)
+			return;
+
+	if (sigqueue(dwmblockspid, SIGUSR1, sv) == -1)
+	{
+		if (errno == ESRCH)
+		{
+			if (!getdwmblockspid())
+				sigqueue(dwmblockspid, SIGUSR1, sv);
+		}
+	}
+}
+#endif
 
 void expose(XEvent *e)
 {
@@ -1952,8 +2027,8 @@ void defaultgaps(const Arg *arg)
 void incrgaps(const Arg *arg)
 {
 	setgaps(
-		selmon->gappoh + arg->i,
-		selmon->gappov + arg->i,
+		selmon->gappoh + (arg->i * 2.5),
+		selmon->gappov + (arg->i * 2.5),
 		selmon->gappih + arg->i,
 		selmon->gappiv + arg->i);
 }
@@ -2593,8 +2668,10 @@ void updatesizehints(Client *c)
 
 void updatestatus(void)
 {
-	if (!gettextprop(root, XA_WM_NAME, stext, sizeof(stext)))
+	if (!gettextprop(root, XA_WM_NAME, rawstext, sizeof(rawstext)))
 		strcpy(stext, "dwm-" VERSION);
+	else
+		copyvalidchars(stext, rawstext);
 	drawbar(selmon);
 	updatesystray();
 }
