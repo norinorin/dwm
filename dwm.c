@@ -1909,7 +1909,7 @@ void savesession(void)
 
 	for (m = mons; m; m = m->next)
 		for (c = m->clients; c; c = c->next)
-			fprintf(fp, "%d %ld %d\n", m->num, c->win, c->tags);
+			fprintf(fp, "%d %lu %u\n", m->num, c->win, c->tags);
 
 	fclose(fp);
 }
