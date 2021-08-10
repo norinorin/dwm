@@ -78,6 +78,7 @@ static const char *downvol[] = {"amixer", "set", "Master", "5%-", NULL};
 static const char *mutevol[] = {"amixer", "set", "Master", "toggle", NULL};
 static const char *screenshot[] = {"flameshot", "gui", NULL};
 static const char *lockscreen[] = {"betterlockscreen", "-l", "blur", NULL};
+static const char *clearclip[] = {"xsel", "-bc", NULL};
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
@@ -125,6 +126,7 @@ static Key keys[] = {
 	{MODKEY, XK_F11, spawn, {.v = downvol}},
 	{MODKEY, XK_F12, spawn, {.v = upvol}},
 	{MODKEY, XK_s, spawn, {.v = lockscreen}},
+	{MODKEY, XK_c, spawn, {.v = clearclip}},
 	{0, XK_Print, spawn, {.v = screenshot}},
 	TAGKEYS(XK_1, 0)
 		TAGKEYS(XK_2, 1)
