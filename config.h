@@ -128,6 +128,8 @@ static Key keys[] = {
 	{MODKEY, XK_s, spawn, {.v = lockscreen}},
 	{MODKEY, XK_c, spawn, {.v = clearclip}},
 	{0, XK_Print, spawn, {.v = screenshot}},
+	{MODKEY | ShiftMask, XK_q, quit, {.i = 0}},
+	{MODKEY | ShiftMask, XK_r, quit, {.i = 1}},
 	TAGKEYS(XK_1, 0)
 		TAGKEYS(XK_2, 1)
 			TAGKEYS(XK_3, 2)
@@ -136,8 +138,7 @@ static Key keys[] = {
 						TAGKEYS(XK_6, 5)
 							TAGKEYS(XK_7, 6)
 								TAGKEYS(XK_8, 7)
-									TAGKEYS(XK_9, 8){MODKEY | ShiftMask, XK_q, quit, {0}},
-};
+									TAGKEYS(XK_9, 8)};
 
 /* button definitions */
 /* click can be ClkTagBar, ClkLtSymbol, ClkStatusText, ClkWinTitle, ClkClientWin, or ClkRootWin */

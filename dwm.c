@@ -382,6 +382,7 @@ static void (*handler[LASTEvent])(XEvent *) = {
 	[UnmapNotify] = unmapnotify};
 static Atom wmatom[WMLast], netatom[NetLast], xatom[XLast];
 static int running = 1;
+static int restart = 0;
 static Cur *cursor[CurLast];
 static Clr **scheme;
 static Display *dpy;
@@ -1614,7 +1615,11 @@ void propertynotify(XEvent *e)
 
 void quit(const Arg *arg)
 {
-	savesession();
+	if (arg->i)
+	{
+		savesession();
+		restart = 1;
+	}
 	running = 0;
 }
 
@@ -3092,10 +3097,11 @@ void zoom(const Arg *arg)
 
 int main(int argc, char *argv[])
 {
+	int restore = 1;
 	if (argc == 2 && !strcmp("-v", argv[1]))
 		die("dwm-" VERSION);
-	else if (argc != 1)
-		die("usage: dwm [-v]");
+	else if (argc != 1 && (restore = strcmp("--restore", argv[1])))
+		die("usage: dwm [-v] [--restore]");
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);
 	if (!(dpy = XOpenDisplay(NULL)))
@@ -3107,12 +3113,15 @@ int main(int argc, char *argv[])
 		die("pledge");
 #endif /* __OpenBSD__ */
 	scan();
-	restoresession();
+	if (!restore)
+		restoresession();
 	char *statepath = getstatepath();
 	remove(statepath);
 	free(statepath);
 	runautostart();
 	run();
+	if (restart)
+		execlp(argv[0], argv[0], "--restore", NULL);
 	cleanup();
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
