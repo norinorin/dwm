@@ -604,7 +604,7 @@ void buttonpress(XEvent *e)
 		}
 		else if (ev->x < x + blw)
 			click = ClkLtSymbol;
-		else if (ev->x > (x = selmon->ww - TEXTW(stext) + lrpad))
+		else if (ev->x > (x = selmon->ww - TEXTW(stext) - lrpad - systrayspacing))
 		{
 			click = ClkStatusText;
 
@@ -618,7 +618,7 @@ void buttonpress(XEvent *e)
 				{
 					ch = text[i];
 					text[i] = '\0';
-					x += TEXTW(text) - lrpad;
+					x += TEXTW(text) - lrpad - systrayspacing;
 					text[i] = ch;
 					text += i + 1;
 					i = -1;
