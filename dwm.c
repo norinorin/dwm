@@ -587,6 +587,7 @@ void buttonpress(XEvent *e)
 	}
 	if (ev->window == selmon->barwin)
 	{
+		unsigned int systrayw = getsystraywidth();
 		i = x = 0;
 		for (c = m->clients; c; c = c->next)
 			occ |= c->tags == 255 ? 0 : c->tags;
@@ -604,7 +605,7 @@ void buttonpress(XEvent *e)
 		}
 		else if (ev->x < x + blw)
 			click = ClkLtSymbol;
-		else if (ev->x > (x = selmon->ww - TEXTW(stext) - lrpad - systrayspacing))
+		else if (ev->x > (x = selmon->ww - TEXTW(stext) + lrpad - systrayw))
 		{
 			click = ClkStatusText;
 
@@ -618,7 +619,7 @@ void buttonpress(XEvent *e)
 				{
 					ch = text[i];
 					text[i] = '\0';
-					x += TEXTW(text) - lrpad - systrayspacing;
+					x += TEXTW(text) - lrpad;
 					text[i] = ch;
 					text += i + 1;
 					i = -1;
