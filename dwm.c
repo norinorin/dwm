@@ -29,7 +29,6 @@
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
-#include <sys/stat.h>
 #include <sys/wait.h>
 #include <X11/cursorfont.h>
 #include <X11/keysym.h>
@@ -289,7 +288,6 @@ static void resizemouse(const Arg *arg);
 static void resizerequest(XEvent *e);
 static void restack(Monitor *m);
 static void run(void);
-static void runautostart(void);
 static void scan(void);
 static int sendevent(Window w, Atom proto, int m, long d0, long d1, long d2, long d3, long d4);
 static void sendmon(Client *c, Monitor *m);
@@ -346,14 +344,12 @@ static int xerror(Display *dpy, XErrorEvent *ee);
 static int xerrordummy(Display *dpy, XErrorEvent *ee);
 static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void zoom(const Arg *arg);
+static void runautostart(void);
 
 /* variables */
 static Systray *systray = NULL;
-static const char autostartblocksh[] = "autostart_blocking.sh";
-static const char autostartsh[] = "autostart.sh";
 static const char broken[] = "broken";
 static const char dwmdir[] = "dwm";
-static const char localshare[] = ".local/share";
 static const char fpstate[] = "state";
 static char stext[256];
 static char rawstext[256];
@@ -534,6 +530,17 @@ void arrange(Monitor *m)
 	else
 		for (m = mons; m; m = m->next)
 			arrangemon(m);
+}
+
+void runautostart(void)
+{
+	char cmd[256];
+	for (int i = 0; i < sizeof(autostartcmd) / sizeof(char *) && autostartcmd[i]; i++)
+	{
+		sprintf(cmd, "killall -q %s; %s &", autostartcmd[i], autostartcmd[i]);
+		system(cmd);
+		cmd[0] = 0;
+	}
 }
 
 void arrangemon(Monitor *m)
@@ -1465,7 +1472,7 @@ void monocle(Monitor *m)
 	if (n > 0) /* override layout symbol */
 		snprintf(m->ltsymbol, sizeof m->ltsymbol, "[%d]", n);
 	for (c = nexttiled(m->clients); c; c = nexttiled(c->next))
-		resize(c, m->wx + m->gappoh, m->wy + m->gappov, m->ww - 2 * c->bw - 2 * m->gappoh, m->wh - 2 * c->bw - 2 * m->gappov, 0);
+		resize(c, m->wx + m->gappov * enablegaps, m->wy + m->gappoh * enablegaps, m->ww - 2 * c->bw - 2 * m->gappov * enablegaps, m->wh - 2 * c->bw - 2 * m->gappoh * enablegaps, 0);
 }
 
 void motionnotify(XEvent *e)
@@ -1790,91 +1797,6 @@ void run(void)
 	while (running && !XNextEvent(dpy, &ev))
 		if (handler[ev.type])
 			handler[ev.type](&ev); /* call handler */
-}
-
-void runautostart(void)
-{
-	char *pathpfx;
-	char *path;
-	char *xdgdatahome;
-	char *home;
-	struct stat sb;
-
-	if ((home = getenv("HOME")) == NULL)
-		/* this is almost impossible */
-		return;
-
-	/* if $XDG_DATA_HOME is set and not empty, use $XDG_DATA_HOME/dwm,
-	 * otherwise use ~/.local/share/dwm as autostart script directory
-	 */
-	xdgdatahome = getenv("XDG_DATA_HOME");
-	if (xdgdatahome != NULL && *xdgdatahome != '\0')
-	{
-		/* space for path segments, separators and nul */
-		pathpfx = ecalloc(1, strlen(xdgdatahome) + strlen(dwmdir) + 2);
-
-		if (sprintf(pathpfx, "%s/%s", xdgdatahome, dwmdir) <= 0)
-		{
-			free(pathpfx);
-			return;
-		}
-	}
-	else
-	{
-		/* space for path segments, separators and nul */
-		pathpfx = ecalloc(1, strlen(home) + strlen(localshare) + strlen(dwmdir) + 3);
-
-		if (sprintf(pathpfx, "%s/%s/%s", home, localshare, dwmdir) < 0)
-		{
-			free(pathpfx);
-			return;
-		}
-	}
-
-	/* check if the autostart script directory exists */
-	if (!(stat(pathpfx, &sb) == 0 && S_ISDIR(sb.st_mode)))
-	{
-		/* the XDG conformant path does not exist or is no directory
-		 * so we try ~/.dwm instead
-		 */
-		char *pathpfx_new = realloc(pathpfx, strlen(home) + strlen(dwmdir) + 3);
-		if (pathpfx_new == NULL)
-		{
-			free(pathpfx);
-			return;
-		}
-		pathpfx = pathpfx_new;
-
-		if (sprintf(pathpfx, "%s/.%s", home, dwmdir) <= 0)
-		{
-			free(pathpfx);
-			return;
-		}
-	}
-
-	/* try the blocking script first */
-	path = ecalloc(1, strlen(pathpfx) + strlen(autostartblocksh) + 2);
-	if (sprintf(path, "%s/%s", pathpfx, autostartblocksh) <= 0)
-	{
-		free(path);
-		free(pathpfx);
-	}
-
-	if (access(path, X_OK) == 0)
-		system(path);
-
-	/* now the non-blocking script */
-	if (sprintf(path, "%s/%s", pathpfx, autostartsh) <= 0)
-	{
-		free(path);
-		free(pathpfx);
-	}
-
-	if (access(path, X_OK) == 0)
-		system(strcat(path, " &"));
-
-	free(pathpfx);
-	free(path);
 }
 
 char *getstatepath(void)
@@ -3127,10 +3049,9 @@ int main(int argc, char *argv[])
 		die("pledge");
 #endif /* __OpenBSD__ */
 	scan();
+	runautostart();
 	if (restore)
 		restoresession();
-	else
-		runautostart();
 	char *statepath = getstatepath();
 	remove(statepath);
 	free(statepath);
