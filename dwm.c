@@ -1908,6 +1908,7 @@ void savesession(void)
 	Client *c;
 	Monitor *m;
 
+	fprintf(fp, "%d %u\n", selmon->num, selmon->tagset[selmon->seltags]);
 	for (m = mons; m; m = m->next)
 		for (c = m->clients; c; c = c->next)
 			fprintf(fp, "%d %lu %u\n", m->num, c->win, c->tags);
@@ -1930,6 +1931,11 @@ void restoresession(void)
 	Client *curc = NULL;
 	Monitor *m;
 	Monitor *destm = NULL;
+
+	fscanf(fp, "%d", &monnum);
+	Arg lastmonnum = {.i = monnum};
+	fscanf(fp, "%u", &tags);
+	Arg lasttags = {.ui = tags};
 
 	for (;;)
 	{
@@ -1975,6 +1981,8 @@ void restoresession(void)
 		curc = NULL;
 		destm = NULL;
 	}
+	focusmon(&lastmonnum);
+	view(&lasttags);
 	fclose(fp);
 }
 
