@@ -3109,7 +3109,7 @@ int main(int argc, char *argv[])
 	int restore = 0;
 	if (argc == 2 && !strcmp("-v", argv[1]))
 		die("dwm-" VERSION);
-	else if (argc != 1 && (restore = !strcmp("--restore", argv[1])))
+	else if (argc != 1 && !(restore = !strcmp("--restore", argv[1])))
 		die("usage: dwm [-v] [--restore]");
 	if (!setlocale(LC_CTYPE, "") || !XSupportsLocale())
 		fputs("warning: no locale support\n", stderr);
