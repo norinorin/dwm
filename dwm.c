@@ -2961,7 +2961,15 @@ void view(const Arg *arg)
 	unsigned int tmptag;
 
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
+	{
+		if ((tmptag = selmon->pertag->prevtag) && tmptag != (arg->ui & TAGMASK))
+		{
+			Arg a = {.ui = tmptag};
+			view(&a);
+		}
 		return;
+	}
+
 	selmon->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
 	{
