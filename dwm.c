@@ -355,7 +355,6 @@ static const char broken[] = "broken";
 static const char dwmdir[] = "dwm";
 static const char localshare[] = ".local/share";
 static const char fpstate[] = "state";
-static unsigned int prevtag = 2;
 static char stext[256];
 static char rawstext[256];
 static int screen;
@@ -1966,8 +1965,6 @@ void restoresession(void)
 					continue;
 				curc = c;
 				c->tags = tags;
-				if (tags != 1)
-					prevtag = tags;
 			}
 
 		if (curc != NULL && (destm = dirtomon(monnum)))
@@ -1985,9 +1982,7 @@ void restoresession(void)
 		destm = NULL;
 	}
 	focusmon(&lastmonnum);
-	if (lasttags.ui != 1)
-		// we're already at tag 1, don't call view()
-		view(&lasttags);
+	view(&lasttags);
 	fclose(fp);
 }
 
@@ -2975,15 +2970,11 @@ void view(const Arg *arg)
 
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 	{
-		if (prevtag != (arg->ui & TAGMASK))
-		{
-			Arg a = {.ui = prevtag};
-			view(&a);
-		}
+		Arg a = {0};
+		view(&a);
 		return;
 	}
 
-	prevtag = selmon->tagset[selmon->seltags];
 	selmon->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
 	{
