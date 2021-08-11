@@ -3116,10 +3116,11 @@ int main(int argc, char *argv[])
 	scan();
 	if (!restore)
 		restoresession();
+	else
+		runautostart();
 	char *statepath = getstatepath();
 	remove(statepath);
 	free(statepath);
-	runautostart();
 	run();
 	if (restart)
 		execlp(argv[0], argv[0], "--restore", NULL);
