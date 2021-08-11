@@ -1966,6 +1966,8 @@ void restoresession(void)
 					continue;
 				curc = c;
 				c->tags = tags;
+				if (tags != 1)
+					prevtag = tags;
 			}
 
 		if (curc != NULL && (destm = dirtomon(monnum)))
@@ -1983,7 +1985,9 @@ void restoresession(void)
 		destm = NULL;
 	}
 	focusmon(&lastmonnum);
-	view(&lasttags);
+	if (lasttags.ui != 1)
+		// we're already at tag 1, don't call view()
+		view(&lasttags);
 	fclose(fp);
 }
 
