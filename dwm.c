@@ -355,6 +355,7 @@ static const char broken[] = "broken";
 static const char dwmdir[] = "dwm";
 static const char localshare[] = ".local/share";
 static const char fpstate[] = "state";
+static unsigned int prevtag = 2;
 static char stext[256];
 static char rawstext[256];
 static int screen;
@@ -2970,14 +2971,15 @@ void view(const Arg *arg)
 
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 	{
-		if ((tmptag = selmon->pertag->prevtag) && tmptag != (arg->ui & TAGMASK))
+		if (prevtag != (arg->ui & TAGMASK))
 		{
-			Arg a = {.ui = tmptag};
+			Arg a = {.ui = prevtag};
 			view(&a);
 		}
 		return;
 	}
 
+	prevtag = selmon->tagset[selmon->seltags];
 	selmon->seltags ^= 1; /* toggle sel tagset */
 	if (arg->ui & TAGMASK)
 	{
