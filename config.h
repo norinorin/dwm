@@ -17,12 +17,12 @@ static const int showbar = 1;				  /* 0 means no bar */
 static const int topbar = 1;				  /* 0 means bottom bar */
 static const char *fonts[] = {"SauceCodePro Nerd Font Mono:size=10", "JoyPixels:pixelsize=10:antialias=true:autohint=true"};
 static const char dmenufont[] = "monospace:size=10";
-static const char normbgcolor[] = "#222222";
-static const char normbordercolor[] = "#444444";
+static const char normbgcolor[] = "#2e2e2e";
+static const char normbordercolor[] = "#111111";
 static const char normfgcolor[] = "#bbbbbb";
 static const char selfgcolor[] = "#222222";
-static const char selbordercolor[] = "#770000";
-static const char selbgcolor[] = "#ffffff";
+static const char selbordercolor[] = "#ffffff";
+static const char selbgcolor[] = "#dedede";
 static const char *colors[][3] = {
 	/*               fg           bg           border   */
 	[SchemeNorm] = {normfgcolor, normbgcolor, normbordercolor},
