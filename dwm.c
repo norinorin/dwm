@@ -1060,7 +1060,7 @@ int drawstatusbar(Monitor *m, int bh, unsigned int stw, char *stext)
 	drw_setscheme(drw, scheme[LENGTH(colors)]);
 	drw->scheme[ColFg] = scheme[SchemeNorm][ColFg];
 	drw->scheme[ColBg] = scheme[SchemeNorm][ColBg];
-	drw_rect(drw, x - lrpad, 0, w, bh, 1, 1);
+	drw_rect(drw, x - lrpad, 0, w + lrpad, bh, 1, 1);
 	x++;
 
 	/* process status text */
