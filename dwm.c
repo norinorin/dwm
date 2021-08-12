@@ -399,6 +399,7 @@ struct Pertag
 	unsigned int sellts[LENGTH(tags) + 1];	   /* selected layouts */
 	const Layout *ltidxs[LENGTH(tags) + 1][2]; /* matrix of tags and layouts indexes  */
 	int showbars[LENGTH(tags) + 1];			   /* display bar for the current tag */
+	int enablegaps[LENGTH(tags) + 1];		   /* gaps state for the current tag */
 };
 
 /* compile-time check if all tags fit into an unsigned int bit array. */
@@ -922,6 +923,7 @@ createmon(void)
 		m->pertag->sellts[i] = m->sellt;
 
 		m->pertag->showbars[i] = m->showbar;
+		m->pertag->enablegaps[i] = enablegaps;
 	}
 
 	return m;
@@ -1463,6 +1465,7 @@ void maprequest(XEvent *e)
 
 void monocle(Monitor *m)
 {
+	enablegaps = m->pertag->enablegaps[m->pertag->curtag];
 	unsigned int n = 0;
 	Client *c;
 
@@ -2058,7 +2061,7 @@ void setgaps(int oh, int ov, int ih, int iv)
 
 void togglegaps(const Arg *arg)
 {
-	enablegaps = !enablegaps;
+	enablegaps = selmon->pertag->enablegaps[selmon->pertag->curtag] = !enablegaps;
 	arrange(selmon);
 }
 
@@ -2308,6 +2311,7 @@ void tagmon(const Arg *arg)
 
 void tile(Monitor *m)
 {
+	enablegaps = m->pertag->enablegaps[m->pertag->curtag];
 	unsigned int i, n, h, r, oe = enablegaps, ie = enablegaps, mw, my, ty;
 	Client *c;
 
