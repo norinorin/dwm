@@ -232,6 +232,7 @@ static FILE *getstatefile(char *mode);
 static void savesession(void);
 static void restoresession(void);
 static void copyvalidchars(char *text, char *rawtext);
+void copynoncolorchars(char *text, char *rawtext);
 static void applyrules(Client *c);
 static int applysizehints(Client *c, int *x, int *y, int *w, int *h, int interact);
 static void arrange(Monitor *m);
@@ -253,7 +254,7 @@ static void detachstack(Client *c);
 static Monitor *dirtomon(int dir);
 static void drawbar(Monitor *m);
 static void drawbars(void);
-static int drawstatusbar(Monitor *m, int bh, char *text);
+static int drawstatusbar(Monitor *m, int bh, unsigned int stw, char *text);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
 static void focus(Client *c);
@@ -352,8 +353,10 @@ static Systray *systray = NULL;
 static const char broken[] = "broken";
 static const char dwmdir[] = "dwm";
 static const char fpstate[] = "state";
-static char stext[1024];
-static char rawstext[1024];
+static char stext[1024];		 /* Status text with color chars */
+static char rawstext[1024];		 /* Raw status text */
+static char cleanstext[1024];	 /* CLean status text without sigchar */
+static char rawcleanstext[1024]; /* CLean status text with sigchar */
 static int screen;
 static int sw, sh;		   /* X display screen geometry width, height */
 static int bh, blw = 0;	   /* bar geometry */
@@ -578,6 +581,24 @@ void copyvalidchars(char *text, char *rawtext)
 	text[j] = '\0';
 }
 
+void copynoncolorchars(char *text, char *rawtext)
+{
+	int i = -1, j = 0;
+
+	while (rawtext[++i])
+	{
+		if (rawtext[i] == '^' && rawtext[i + 1] && rawtext[i + 1] != '^')
+		{
+			while (rawtext[++i] != '^')
+				;
+			continue;
+		}
+
+		text[j++] = rawtext[i];
+	}
+	text[j] = '\0';
+}
+
 void buttonpress(XEvent *e)
 {
 	unsigned int i, x, click, occ = 0;
@@ -614,11 +635,11 @@ void buttonpress(XEvent *e)
 		}
 		else if (ev->x < x + blw)
 			click = ClkLtSymbol;
-		else if (ev->x > (x = selmon->ww - TEXTW(stext) + lrpad - systrayw))
+		else if (ev->x > (x = selmon->ww - TEXTW(cleanstext) + lrpad - systrayw))
 		{
 			click = ClkStatusText;
 
-			char *text = rawstext;
+			char *text = rawcleanstext;
 			int i = -1;
 			char ch;
 			dwmblockssig = 0;
@@ -989,7 +1010,7 @@ dirtomon(int dir)
 	return m;
 }
 
-int drawstatusbar(Monitor *m, int bh, char *stext)
+int drawstatusbar(Monitor *m, int bh, unsigned int stw, char *stext)
 {
 	int ret, i, w, x, len;
 	short isCode = 0;
@@ -1034,6 +1055,7 @@ int drawstatusbar(Monitor *m, int bh, char *stext)
 
 	w += 2; /* 1px padding on both sides */
 	ret = x = m->ww - w;
+	x -= stw;
 
 	drw_setscheme(drw, scheme[LENGTH(colors)]);
 	drw->scheme[ColFg] = scheme[SchemeNorm][ColFg];
@@ -1051,7 +1073,7 @@ int drawstatusbar(Monitor *m, int bh, char *stext)
 
 			text[i] = '\0';
 			w = TEXTW(text) - lrpad;
-			drw_text(drw, x, 0, w, bh, 0, text, 0);
+			drw_text(drw, x, barhgap / 2, w, bh - barhgap, 0, text, 0);
 
 			x += w;
 
@@ -1109,7 +1131,7 @@ int drawstatusbar(Monitor *m, int bh, char *stext)
 	if (!isCode)
 	{
 		w = TEXTW(text) - lrpad;
-		drw_text(drw, x, 0, w, bh, 0, text, 0);
+		drw_text(drw, x, barhgap / 2, w, bh - barhgap, 0, text, 0);
 	}
 
 	drw_setscheme(drw, scheme[SchemeNorm]);
@@ -1132,7 +1154,7 @@ void drawbar(Monitor *m)
 	/* draw status first so it can be overdrawn by tags later */
 	if (m == selmon)
 	{ /* status is only drawn on selected monitor */
-		tw = m->ww - drawstatusbar(m, bh, stext);
+		tw = m->ww - drawstatusbar(m, bh, stw, stext);
 	}
 
 	resizebarwin(m);
@@ -1158,7 +1180,7 @@ void drawbar(Monitor *m)
 	drw_setscheme(drw, scheme[SchemeNorm]);
 	x = drw_text(drw, x, 0, w, bh, lrpad / 2, m->ltsymbol, 0);
 
-	if ((w = m->ww - tw - stw - x) > bh)
+	if ((w = m->ww - tw - stw - x - lrpad / 2) > bh)
 	{
 		if (m->sel)
 		{
@@ -2306,7 +2328,7 @@ void setup(void)
 	if (!drw_fontset_create(drw, fonts, LENGTH(fonts)))
 		die("no fonts could be loaded.");
 	lrpad = drw->fonts->h;
-	bh = drw->fonts->h + 2;
+	bh = drw->fonts->h + barhgap;
 	updategeom();
 	/* init atoms */
 	utf8string = XInternAtom(dpy, "UTF8_STRING", False);
@@ -2847,7 +2869,11 @@ void updatestatus(void)
 	if (!gettextprop(root, XA_WM_NAME, rawstext, sizeof(rawstext)))
 		strcpy(stext, "dwm-" VERSION);
 	else
+	{
 		copyvalidchars(stext, rawstext);
+		copynoncolorchars(rawcleanstext, rawstext);
+		copyvalidchars(cleanstext, rawcleanstext);
+	}
 	drawbar(selmon);
 	updatesystray();
 }
@@ -2856,22 +2882,22 @@ void updatesystrayicongeom(Client *i, int w, int h)
 {
 	if (i)
 	{
-		i->h = bh;
+		i->h = bh - barhgap;
 		if (w == h)
-			i->w = bh;
-		else if (h == bh)
+			i->w = bh - barhgap;
+		else if (h == bh - barhgap)
 			i->w = w;
 		else
-			i->w = (int)((float)bh * ((float)w / (float)h));
+			i->w = (int)((float)(bh - barhgap) * ((float)w / (float)h));
 		applysizehints(i, &(i->x), &(i->y), &(i->w), &(i->h), False);
 		/* force icons into the systray dimensions if they don't want to */
-		if (i->h > bh)
+		if (i->h > bh - barhgap)
 		{
 			if (i->w == i->h)
-				i->w = bh;
+				i->w = bh - barhgap;
 			else
-				i->w = (int)((float)bh * ((float)i->w / (float)i->h));
-			i->h = bh;
+				i->w = (int)((float)(bh - barhgap) * ((float)i->w / (float)i->h));
+			i->h = bh - barhgap;
 		}
 	}
 }
@@ -2955,7 +2981,7 @@ void updatesystray(void)
 		XMapRaised(dpy, i->win);
 		w += systrayspacing;
 		i->x = w;
-		XMoveResizeWindow(dpy, i->win, i->x, 0, i->w, i->h);
+		XMoveResizeWindow(dpy, i->win, i->x, barhgap / 2, i->w, i->h);
 		w += i->w;
 		if (i->mon != m)
 			i->mon = m;
