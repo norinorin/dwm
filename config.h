@@ -18,13 +18,13 @@ static const int topbar = 1;				  /* 0 means bottom bar */
 static const int barhgap = 10;
 static const char *fonts[] = {"SauceCodePro Nerd Font Mono:size=10", "JoyPixels:pixelsize=10:antialias=true:autohint=true"};
 static const char dmenufont[] = "monospace:size=10";
-static const char normbgcolor[] = "#2E3440";
-static const char normbordercolor[] = "#111111";
-static const char normfgcolor[] = "#bbbbbb";
-static const char selfgcolor[] = "#222222";
-static const char selbordercolor[] = "#ffffff";
-static const char selbgcolor[] = "#dedede";
-static const char *colors[][3] = {
+static char normbgcolor[] = "#2E3440";
+static char normbordercolor[] = "#111111";
+static char normfgcolor[] = "#bbbbbb";
+static char selfgcolor[] = "#222222";
+static char selbordercolor[] = "#ffffff";
+static char selbgcolor[] = "#dedede";
+static char *colors[][3] = {
 	/*               fg           bg           border   */
 	[SchemeNorm] = {normfgcolor, normbgcolor, normbordercolor},
 	[SchemeSel] = {selfgcolor, selbgcolor, selbordercolor},
@@ -132,6 +132,7 @@ static Key keys[] = {
 	{0, XK_Print, spawn, {.v = screenshot}},
 	{MODKEY | ShiftMask, XK_q, quit, {.i = 0}},
 	{MODKEY | ShiftMask, XK_r, quit, {.i = 1}},
+	{MODKEY, XK_F5, xrdb, {.v = NULL}},
 	TAGKEYS(XK_1, 0)
 		TAGKEYS(XK_2, 1)
 			TAGKEYS(XK_3, 2)
