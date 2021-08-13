@@ -374,6 +374,7 @@ static int xerrorstart(Display *dpy, XErrorEvent *ee);
 static void xrdb(const Arg *arg);
 static void zoom(const Arg *arg);
 static void runautostart(void);
+static void togglegifwp(Client *c);
 
 /* variables */
 static Systray *systray = NULL;
@@ -1324,6 +1325,7 @@ void focus(Client *c)
 	}
 	selmon->sel = c;
 	drawbars();
+	togglegifwp(c);
 }
 
 /* there are some broken focus acquiring clients needing extra handling */
@@ -2250,6 +2252,16 @@ void setfullscreen(Client *c, int fullscreen)
 		resizeclient(c, c->x, c->y, c->w, c->h);
 		arrange(c->mon);
 	}
+	togglegifwp(c);
+}
+
+void togglegifwp(Client *c)
+{
+	if (!c)
+	{
+		lastfsstate = 0;
+		goto cont;
+	}
 
 	if (lastfsstate == c->isfullscreen)
 		return;
@@ -2257,6 +2269,7 @@ void setfullscreen(Client *c, int fullscreen)
 	if ((lastfsstate = c->isfullscreen))
 		system("pkill -STOP mpv");
 	else
+	cont:
 		system("pkill -CONT mpv");
 }
 
