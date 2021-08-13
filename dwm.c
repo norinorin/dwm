@@ -384,6 +384,7 @@ static char stext[1024];		 /* Status text with color chars */
 static char rawstext[1024];		 /* Raw status text */
 static char cleanstext[1024];	 /* CLean status text without sigchar */
 static char rawcleanstext[1024]; /* CLean status text with sigchar */
+static int lastfsstate = 0;
 static int screen;
 static int sw, sh;		   /* X display screen geometry width, height */
 static int bh, blw = 0;	   /* bar geometry */
@@ -2249,6 +2250,14 @@ void setfullscreen(Client *c, int fullscreen)
 		resizeclient(c, c->x, c->y, c->w, c->h);
 		arrange(c->mon);
 	}
+
+	if (lastfsstate == c->isfullscreen)
+		return;
+
+	if ((lastfsstate = c->isfullscreen))
+		system("pkill -STOP mpv");
+	else
+		system("pkill -CONT mpv");
 }
 
 void setgaps(int oh, int ov, int ih, int iv)
