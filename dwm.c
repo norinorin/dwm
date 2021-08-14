@@ -1572,11 +1572,11 @@ void loadxrdb()
 			if (xrdb != NULL)
 			{
 				XRDB_LOAD_COLOR("dwm.normbordercolor", normbordercolor);
-				XRDB_LOAD_COLOR("*background", normbgcolor);
-				XRDB_LOAD_COLOR("*foreground", normfgcolor);
+				XRDB_LOAD_COLOR("dwm.background", normbgcolor);
+				XRDB_LOAD_COLOR("dwm.foreground", normfgcolor);
 				XRDB_LOAD_COLOR("dwm.selbordercolor", selbordercolor);
-				XRDB_LOAD_COLOR("*foreground", selbgcolor);
-				XRDB_LOAD_COLOR("*background", selfgcolor);
+				XRDB_LOAD_COLOR("dwm.foreground", selbgcolor);
+				XRDB_LOAD_COLOR("dwm.background", selfgcolor);
 			}
 		}
 	}
