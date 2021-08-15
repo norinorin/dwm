@@ -78,7 +78,7 @@ static const char *upvol[] = {"amixer", "set", "Master", "5%+", NULL};
 static const char *downvol[] = {"amixer", "set", "Master", "5%-", NULL};
 static const char *mutevol[] = {"amixer", "set", "Master", "toggle", NULL};
 static const char *screenshot[] = {"flameshot", "gui", NULL};
-static const char *lockscreen[] = {"betterlockscreen", "-l", "blur", NULL};
+static const char *lockscreen[] = {"lockscreen", NULL};
 static const char *clearclip[] = {"xsel", "-bc", NULL};
 static const char *autostartcmd[] = {"dwmblocks", "volumeicon", NULL};
 
