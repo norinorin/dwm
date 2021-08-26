@@ -3133,8 +3133,8 @@ void view(const Arg *arg)
 
 	if ((arg->ui & TAGMASK) == selmon->tagset[selmon->seltags])
 	{
-		Arg a = {0};
-		view(&a);
+		// Arg a = {0};
+		// view(&a);
 		return;
 	}
 
