@@ -2266,11 +2266,16 @@ void togglegifwp(Client *c)
 	if (lastfsstate == c->isfullscreen)
 		return;
 
+	// ugly but w/e
 	if ((lastfsstate = c->isfullscreen))
-		system("pkill -STOP mpv");
-	else
-	cont:
-		system("pkill -CONT mpv");
+	{
+		Arg a = SHCMD("pkill -STOP mpv");
+		spawn(&a);
+		return;
+	}
+cont:;
+	Arg a = SHCMD("pkill -CONT mpv");
+	spawn(&a);
 }
 
 void setgaps(int oh, int ov, int ih, int iv)
