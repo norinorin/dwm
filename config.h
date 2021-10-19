@@ -80,7 +80,7 @@ static const char *mutevol[] = {"amixer", "set", "Master", "toggle", NULL};
 static const char *screenshot[] = {"flameshot", "gui", NULL};
 static const char *lockscreen[] = {"lockscreen", NULL};
 static const char *clearclip[] = {"xsel", "-bc", NULL};
-static const char *autostartcmd[] = {"dwmblocks", "volumeicon", NULL};
+static const char *autostartcmd[] = {"dwmblocks", NULL};
 
 static Key keys[] = {
 	/* modifier                     key        function        argument */
